@@ -1,0 +1,2 @@
+plugins { id 'com.android.application' }
+android { namespace 'ua.budivelnyk.ua'; compileSdk 35; defaultConfig { applicationId 'ua.budivelnyk.ua'; minSdk 23; targetSdk 35; versionCode 5; versionName '1.7' } }
