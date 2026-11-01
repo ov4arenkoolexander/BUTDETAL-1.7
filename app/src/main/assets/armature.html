@@ -5,7 +5,7 @@
 </style></head><body>
 <header><small>BUTDETAL · БУДІВЕЛЬНИЙ ДОВІДНИК</small><h1>Модуль армування</h1><div class="muted">Побудова схем · Розпізнавання креслень · Специфікація</div></header>
 <main>
-<div style="display:flex;justify-content:flex-end;gap:8px;margin:12px 0"><a href="armature.html" style="color:#ffc400;padding:9px;border:1px solid #59677a;border-radius:9px;text-decoration:none">Українська</a><a href="armature-ru.html" style="color:#fff;padding:9px;border:1px solid #59677a;border-radius:9px;text-decoration:none">Русский</a></div><div class="tabs"><button class="active" onclick="tab('build',this)">Генератор</button><button onclick="tab('recognize',this)">Фото / PDF</button><button onclick="tab('archive',this)">Мої схеми</button></div>
+<div class="tabs"><button class="active" onclick="tab('build',this)">Генератор</button><button onclick="tab('recognize',this)">Фото / PDF</button><button onclick="tab('archive',this)">Мої схеми</button></div>
 <section id="build">
 <div class="card"><h2>1. Тип конструкції</h2><label>Конструкція</label><select id="kind" onchange="draw()"><option value="slab">Плита</option><option value="beam">Балка — поперечний переріз</option><option value="column">Колона — поперечний переріз</option></select>
 <div class="grid"><div><label>Довжина, мм</label><input id="length" type="number" min="100" value="6000" oninput="draw()"></div><div><label>Ширина, мм</label><input id="width" type="number" min="100" value="3000" oninput="draw()"></div><div><label>Товщина / висота, мм</label><input id="depth" type="number" min="50" value="200" oninput="draw()"></div><div><label>Захисний шар, мм</label><input id="cover" type="number" min="10" value="25" oninput="draw()"></div></div></div>
