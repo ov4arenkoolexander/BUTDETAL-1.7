@@ -156,33 +156,24 @@ renderArchive();renderProductCatalog();renderExcelReferenceData();
 async function checkAppUpdate(){
  const box=document.getElementById('updateStatus');
  const old=document.getElementById('updateDownload');if(old)old.remove();
- box.textContent='Перевіряю останню версію BUTDETAL…';
+ box.textContent='Перевіряю останню збірку BUTDETAL…';
  const repo='ov4arenkoolexander/BUTDETAL-1.7';
  const headers={'Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'};
  try{
-  const releaseResponse=await fetch('https://api.github.com/repos/'+repo+'/releases/latest',{headers,cache:'no-store'});
-  if(releaseResponse.ok){
-   const release=await releaseResponse.json();
-   const apk=(release.assets||[]).find(x=>/\.apk$/i.test(x.name));
-   if(apk){showUpdateLink(apk.browser_download_url,'Завантажити '+(release.tag_name||release.name));box.textContent='Доступний реліз '+(release.tag_name||release.name)+'.';return;}
-  }
-  const runsResponse=await fetch('https://api.github.com/repos/'+repo+'/actions/runs?branch=feature%2Fexcel-import-and-image-delete&status=completed&per_page=20',{headers,cache:'no-store'});
-  if(!runsResponse.ok)throw Error('GitHub Actions API: HTTP '+runsResponse.status);
-  const data=await runsResponse.json();
-  const run=(data.workflow_runs||[]).find(x=>x.conclusion==='success');
-  if(!run){box.textContent='Ще немає успішної нової збірки APK.';return;}
-  const artifactResponse=await fetch('https://api.github.com/repos/'+repo+'/actions/runs/'+run.id+'/artifacts',{headers,cache:'no-store'});
-  if(!artifactResponse.ok)throw Error('Не вдалося отримати APK: HTTP '+artifactResponse.status);
-  const artifactData=await artifactResponse.json();
-  const artifact=(artifactData.artifacts||[]).find(x=>!x.expired&&/APK/i.test(x.name));
-  if(!artifact){box.textContent='Збірка успішна, але APK-архів не знайдено.';return;}
-  showUpdateLink('https://github.com/'+repo+'/actions/runs/'+run.id,'Відкрити завантаження APK');
-  const date=new Date(run.updated_at||run.created_at).toLocaleString('uk-UA');
-  box.textContent='Знайдено успішну збірку ('+date+'). Натисни посилання, потім завантаж APK у розділі Artifacts.';
- }catch(e){
-  box.textContent='Помилка перевірки: '+(e&&e.message?e.message:'немає відповіді від GitHub')+'. Перевір інтернет і повтори.';
-  console.warn('Update check:',e);
- }
+  const response=await fetch('https://api.github.com/repos/'+repo+'/actions/runs?branch=feature%2Fexcel-import-and-image-delete&status=completed&per_page=30',{headers,cache:'no-store'});
+  if(!response.ok)throw Error('GitHub API: HTTP '+response.status);
+  const data=await response.json();
+  const run=(data.workflow_runs||[]).find(x=>x.conclusion==='success'&&x.event==='push');
+  if(!run){box.textContent='Немає успішної збірки для цієї гілки. Спробуй пізніше.';return;}
+  const ar=await fetch('https://api.github.com/repos/'+repo+'/actions/runs/'+run.id+'/artifacts',{headers,cache:'no-store'});
+  if(!ar.ok)throw Error('Не вдалося перевірити APK: HTTP '+ar.status);
+  const ad=await ar.json();
+  const artifact=(ad.artifacts||[]).find(x=>!x.expired&&x.name==='BUTDETAL-APK');
+  if(!artifact){box.textContent='Збірка знайдена, але APK ще не опубліковано. Запусти перевірку пізніше.';return;}
+  const gradleVersion='2.0.4';
+  showUpdateLink('https://github.com/'+repo+'/actions/runs/'+run.id,'Завантажити BUTDETAL '+gradleVersion);
+  box.textContent='Знайдено останню успішну збірку. Відкрий завантаження APK у розділі Artifacts.';
+ }catch(e){box.textContent='Не вдалося перевірити оновлення: '+(e&&e.message?e.message:'помилка мережі')+'. Перевір інтернет і повтори.';console.warn('Update check:',e);}
 }
 function showUpdateLink(url,label){
  const old=document.getElementById('updateDownload');if(old)old.remove();
