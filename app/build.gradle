@@ -1,6 +1,9 @@
 plugins { id 'com.android.application' }
 
-dependencies { implementation 'com.rmtheis:tess-two:9.1.0' }
+dependencies {
+    implementation 'com.rmtheis:tess-two:9.1.0'
+    implementation 'androidx.core:core:1.15.0'
+}
 
 android {
     namespace 'ua.budivelnyk.ua'
