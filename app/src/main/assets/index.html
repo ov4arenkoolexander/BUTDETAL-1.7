@@ -103,7 +103,7 @@ footer{text-align:center;color:#8390a0;font-size:12px;padding:24px}
 <div class="card"><h2>Теоретична маса арматури</h2><p class="muted">Орієнтовні значення за формулою d²/162, кг/м.</p><div style="overflow:auto"><table><thead><tr><th>Діаметр, мм</th><th>кг/м</th><th>кг/6000 мм</th><th>кг/12000 мм</th></tr></thead><tbody id="steelTable"></tbody></table></div></div>
 <div class="card"><h2>Переведення одиниць</h2><table><tbody><tr><td>1 м³</td><td>1000 л</td></tr><tr><td>1 м²</td><td>10 000 см²</td></tr><tr><td>1000 мм</td><td>1 м</td></tr><tr><td>1 т</td><td>1000 кг</td></tr><tr><td>1 кН</td><td>1000 Н</td></tr></tbody></table></div>
 <div class="card"><h2>Геометричні формули</h2><table><tbody><tr><td>Прямокутний блок</td><td>V = a × b × h</td></tr><tr><td>Кругла колона</td><td>V = π × r² × h</td></tr><tr><td>Площа прямокутника</td><td>S = a × b</td></tr><tr><td>Площа круга</td><td>S = π × r²</td></tr></tbody></table></div>
-</section>
+<div class="card"><h2>Імпортовані довідкові таблиці та нормативи</h2><div id="excelTablesView" class="muted"></div><div id="excelNormsView" class="muted"></div></div></section>
 <section id="formulas" class="page hidden">
 <div class="card"><h2>Основні формули</h2>
 <div class="item"><b>Об’єм прямокутної конструкції</b><p>V = довжина × ширина × висота</p><span class="muted">Усі розміри вводь у метрах; результат — м³.</span></div>
@@ -112,7 +112,7 @@ footer{text-align:center;color:#8390a0;font-size:12px;padding:24px}
 <div class="item"><b>Кількість стрижнів у ряду</b><p>Орієнтовно: N = floor(корисна довжина / крок) + 1</p><span class="muted">Фактичну кількість уточнюй з урахуванням захисного шару та проєктних вимог.</span></div>
 <div class="item"><b>Площа круга</b><p>S = π × r², де π ≈ 3,1416</p></div></div>
 <div class="card"><h2>Безпека та точність</h2><div class="warning">Цей застосунок не виконує конструктивний розрахунок несучої здатності. Для фундаментів, перекриттів, балок, колон і стін потрібні дані про навантаження, ґрунт, клас бетону й сталі, умови експлуатації та перевірка кваліфікованим фахівцем.</div></div>
-</section>
+<div class="card"><h2>Формули з Excel</h2><div id="excelFormulasView" class="muted"></div></div></section>
 
 <section id="archive" class="page hidden"><div class="card"><h2>Фотоархів підприємства</h2><p class="muted">Два окремі каталоги на телефоні. Працює без інтернету.</p><div class="folder-grid"><button class="folder-tile" onclick="setArchiveFolder('drawings')"><span>📁 ПАПКА 1</span><b>📐 Креслення</b><span id="drawingCount">0 файлів</span></button><button class="folder-tile" onclick="setArchiveFolder('products')"><span>📁 ПАПКА 2</span><b>🏗️ Фото виробів</b><span id="productCount">0 файлів</span></button></div><label for="archiveFolder">Папка для збереження</label><select id="archiveFolder" onchange="renderArchive()"><option value="drawings">Креслення</option><option value="products">Фото виробів</option></select><label for="archiveTitle">Назва / маркування</label><input id="archiveTitle" maxlength="100" placeholder="Наприклад: ПК 60-12-8 або креслення КЖ-01"><label for="archiveNotes">Примітки (необов’язково)</label><input id="archiveNotes" maxlength="300" placeholder="Розміри, бетон, арматура, номер замовлення"><label for="archiveFile">Вибрати фото з телефону</label><input id="archiveFile" type="file" accept="image/*"><button class="btn" onclick="saveArchivePhoto()">Зберегти в обрану папку</button><div id="archiveStatus" class="result hidden" aria-live="polite"></div></div><div class="card"><h2 id="archiveHeading">📐 Креслення</h2><p class="muted">Перегляд збережених фото та видалення непотрібних файлів.</p><div id="archiveGallery" class="photo-grid"></div></div></section>
 <footer>BUTDETAL • автономний довідник • Дані довідкові</footer>
@@ -147,7 +147,7 @@ function renderLinkedImages(a){if(!a.length)return '<p class="muted">Файлі�
 function deleteLinkedImage(folder,fileName){if(!folder||!fileName){archiveStatus('Не вдалося визначити файл для видалення.',true);return}if(!confirm('Видалити це фото або креслення?'))return;if(nativeArchive()){let r=AndroidStorage.deleteImage(folder,fileName);if(r!=='OK'){archiveStatus('Не вдалося видалити файл.',true);return}}else{let a=loadArchive(folder).filter(x=>x.fileName!==fileName);localStorage.setItem('bua_'+folder,JSON.stringify(a))}viewProductCard(currentProductId)}
 function deleteProductCard(id){if(!confirm('Видалити картку виробу? Фото та креслення залишаться у своїх папках.'))return;saveProductRecords(productRecords().filter(x=>x.id!==id));deleteCloudProduct(id).catch(e=>console.warn('Cloud delete:',e));renderProductCatalog();showPage('home')}
 
-renderArchive();renderProductCatalog();
+renderArchive();renderProductCatalog();renderExcelReferenceData();
 async function checkAppUpdate(){const s=document.getElementById('updateStatus');s.textContent='Перевіряю наявність нової версії…';try{const r=await fetch('https://api.github.com/repos/ov4arenkoolexander/BUTDETAL-1.7/releases/latest',{headers:{'Accept':'application/vnd.github+json'}});if(r.status===404){s.textContent='Офіційний реліз ще не опубліковано.';return}if(!r.ok)throw Error('GitHub відповів: '+r.status);const rel=await r.json();const apk=(rel.assets||[]).find(a=>a.name.toLowerCase().endsWith('.apk'));if(!apk){s.textContent='Реліз знайдено, але APK у ньому відсутній.';return}s.textContent='Доступна версія '+(rel.tag_name||rel.name)+'. Натисни кнопку завантаження.';let old=document.getElementById('updateDownload');if(old)old.remove();const a=document.createElement('a');a.id='updateDownload';a.href=apk.browser_download_url;a.textContent='Завантажити оновлення APK';a.target='_blank';a.rel='noopener';a.className='btn';a.style.display='block';a.style.textAlign='center';a.style.textDecoration='none';s.after(a)}catch(e){s.textContent='Не вдалося перевірити оновлення. Перевір інтернет і спробуй ще раз.';}}
 
 
@@ -228,7 +228,14 @@ function applyButdetalExcel(updateDuplicates){
   for(const row of incoming[n]){const k=excelKey(n,row),i=stored[n].findIndex(x=>excelKey(n,x)===k);if(i>=0){if(updateDuplicates){stored[n][i]=row;updated++}else skipped++}else{stored[n].push(row);added++}}
   localStorage.setItem(keys[n],JSON.stringify(stored[n]));
  }
- butdetalExcelPending=null;document.getElementById('excelActions').classList.add('hidden');document.getElementById('excelPreview').textContent='Імпорт завершено. Додано: '+added+', оновлено: '+updated+', пропущено дублікатів: '+skipped+'. Дані збережено на цьому пристрої.';document.getElementById('excelFile').value='';renderProductCatalog();syncButdetalRecords().catch(e=>console.warn('Excel sync:',e));
+ butdetalExcelPending=null;document.getElementById('excelActions').classList.add('hidden');document.getElementById('excelPreview').textContent='Імпорт завершено. Додано: '+added+', оновлено: '+updated+', пропущено дублікатів: '+skipped+'. Дані збережено на цьому пристрої.';document.getElementById('excelFile').value='';renderProductCatalog();renderExcelReferenceData();syncButdetalRecords().catch(e=>console.warn('Excel sync:',e));
+}
+
+function renderExcelReferenceData(){
+ const show=(id,key,cols)=>{const el=document.getElementById(id);if(!el)return;const a=excelStored(key);if(!a.length){el.innerHTML='<p>Даних з Excel поки немає.</p>';return}el.innerHTML='<div style="overflow:auto"><table><thead><tr>'+cols.map(x=>'<th>'+x+'</th>').join('')+'</tr></thead><tbody>'+a.map(row=>'<tr>'+cols.map(x=>'<td>'+safeText(row[x]||'')+'</td>').join('')+'</tr>').join('')+'</tbody></table></div>'};
+ show('excelTablesView','butdetal_tables_v1',['Назва','Параметр','Значення','Одиниця','Примітки']);
+ show('excelNormsView','butdetal_norms_v1',['Назва','Позначення','Значення','Одиниця','Джерело','Примітки']);
+ show('excelFormulasView','butdetal_formulas_v1',['Назва','Формула','Опис','Одиниці','Примітки']);
 }
 </script>
 </body></html>
