@@ -148,7 +148,51 @@ function deleteLinkedImage(folder,fileName){if(!folder||!fileName){archiveStatus
 function deleteProductCard(id){if(!confirm('Видалити картку виробу? Фото та креслення залишаться у своїх папках.'))return;saveProductRecords(productRecords().filter(x=>x.id!==id));deleteCloudProduct(id).catch(e=>console.warn('Cloud delete:',e));renderProductCatalog();showPage('home')}
 
 renderArchive();renderProductCatalog();renderExcelReferenceData();
-async function checkAppUpdate(){const s=document.getElementById('updateStatus');s.textContent='Перевіряю наявність нової версії…';try{const r=await fetch('https://api.github.com/repos/ov4arenkoolexander/BUTDETAL-1.7/releases/latest',{headers:{'Accept':'application/vnd.github+json'}});if(r.status===404){s.textContent='Офіційний реліз ще не опубліковано.';return}if(!r.ok)throw Error('GitHub відповів: '+r.status);const rel=await r.json();const apk=(rel.assets||[]).find(a=>a.name.toLowerCase().endsWith('.apk'));if(!apk){s.textContent='Реліз знайдено, але APK у ньому відсутній.';return}s.textContent='Доступна версія '+(rel.tag_name||rel.name)+'. Натисни кнопку завантаження.';let old=document.getElementById('updateDownload');if(old)old.remove();const a=document.createElement('a');a.id='updateDownload';a.href=apk.browser_download_url;a.textContent='Завантажити оновлення APK';a.target='_blank';a.rel='noopener';a.className='btn';a.style.display='block';a.style.textAlign='center';a.style.textDecoration='none';s.after(a)}catch(e){s.textContent='Не вдалося перевірити оновлення. Перевір інтернет і спробуй ще раз.';}}
+async function checkAppUpdate(){
+ const box=document.getElementById('updateStatus');
+ box.textContent='Перевіряю релізи та останню успішну збірку…';
+ const repo='ov4arenkoolexander/BUTDETAL-1.7';
+ const headers={'Accept':'application/vnd.github+json','Cache-Control':'no-cache'};
+ try{
+  const releaseResponse=await fetch('https://api.github.com/repos/'+repo+'/releases/latest',{headers,cache:'no-store'});
+  if(releaseResponse.ok){
+   const release=await releaseResponse.json();
+   const apk=(release.assets||[]).find(x=>/\.apk$/i.test(x.name));
+   if(apk){
+    showUpdateLink(apk.browser_download_url,'Завантажити APK '+(release.tag_name||release.name));
+    box.textContent='Опублікований реліз: '+(release.tag_name||release.name)+'.';
+    return;
+   }
+  }
+  const runsResponse=await fetch('https://api.github.com/repos/'+repo+'/actions/runs?branch=feature%2Fexcel-import-and-image-delete&status=success&per_page=10',{headers,cache:'no-store'});
+  if(!runsResponse.ok)throw Error('GitHub Actions: '+runsResponse.status);
+  const data=await runsResponse.json();
+  const run=(data.workflow_runs||[]).find(x=>x.name==='Build BUTDETAL APK'&&x.conclusion==='success');
+  if(!run){
+   box.textContent='Поки немає успішної нової збірки. Спробуй пізніше.';
+   return;
+  }
+  const artifactResponse=await fetch('https://api.github.com/repos/'+repo+'/actions/runs/'+run.id+'/artifacts',{headers,cache:'no-store'});
+  if(!artifactResponse.ok)throw Error('Артефакти: '+artifactResponse.status);
+  const artifactData=await artifactResponse.json();
+  const artifact=(artifactData.artifacts||[]).find(x=>!x.expired&&/APK/i.test(x.name));
+  if(!artifact){
+   box.textContent='Збірка успішна, але APK-артефакт не знайдено.';
+   return;
+  }
+  const runUrl='https://github.com/'+repo+'/actions/runs/'+run.id;
+  showUpdateLink(runUrl,'Відкрити завантаження APK');
+  const date=new Date(run.updated_at||run.created_at).toLocaleString('uk-UA');
+  box.textContent='Остання успішна beta-збірка ('+date+'). Відкрий сторінку збірки та завантаж ZIP у розділі Artifacts.';
+ }catch(e){
+  box.textContent='Не вдалося перевірити оновлення. Перевір інтернет і повтори спробу.';
+  console.warn('Update check:',e);
+ }
+}
+function showUpdateLink(url,label){
+ const old=document.getElementById('updateDownload');if(old)old.remove();
+ const a=document.createElement('a');a.id='updateDownload';a.href=url;a.textContent=label;a.target='_blank';a.rel='noopener';a.className='btn';a.style.display='block';a.style.textAlign='center';a.style.textDecoration='none';document.getElementById('updateStatus').after(a);
+}
 
 
 // Авторизація Supabase. Публічний ключ зберігається лише як клієнтська конфігурація; секретний ключ ніколи не використовується в застосунку.
