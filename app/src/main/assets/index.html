@@ -57,7 +57,7 @@ footer{text-align:center;color:#8390a0;font-size:12px;padding:24px}
 </div>
 <section id="home" class="page">
 <div class="home-welcome"><div><span class="eyebrow">БУДІВЕЛЬНИЙ ДОВІДНИК</span><h2>Працюй точно.<br><em>Будуй впевнено.</em></h2><p>Каталог виробів, креслення та розрахунки — в одному місці.</p></div><div class="home-mark">B<span>+</span></div></div>
-<div class="home-shortcuts">
+<div class="home-shortcuts"><div class="card"><h2>📊 Excel — імпорт та експорт</h2><p class="muted">Працює офлайн. Книга Excel містить чотири аркуші: Каталог, Нормативи, Формули та Таблиці.</p><button class="btn secondary" onclick="exportButdetalExcel()">⬇ Експортувати всі дані в Excel</button><label>Імпорт книги Excel (.xlsx)</label><input id="excelFile" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"><button class="btn" onclick="previewButdetalExcel()">Перевірити файл та показати попередній перегляд</button><div id="excelPreview" class="muted" aria-live="polite"></div><div id="excelActions" class="hidden"><button class="btn" onclick="applyButdetalExcel(true)">Оновити дублікати та додати нові</button><button class="btn secondary" onclick="applyButdetalExcel(false)">Пропустити дублікати, додати лише нові</button></div><button class="btn secondary" onclick="downloadExcelTemplate()">Завантажити порожній шаблон Excel</button></div>
 <button class="shortcut" onclick="navTo('concrete')"><span class="shortcut-icon">▰</span><b>Бетон</b><small>Об’єм конструкцій</small></button>
 <button class="shortcut" onclick="navTo('steel')"><span class="shortcut-icon">⌁</span><b>Арматура</b><small>Маса та довжина</small></button>
 <button class="shortcut" onclick="navTo('tables')"><span class="shortcut-icon">▦</span><b>Таблиці</b><small>Довідкові дані</small></button>
@@ -117,6 +117,7 @@ footer{text-align:center;color:#8390a0;font-size:12px;padding:24px}
 <section id="archive" class="page hidden"><div class="card"><h2>Фотоархів підприємства</h2><p class="muted">Два окремі каталоги на телефоні. Працює без інтернету.</p><div class="folder-grid"><button class="folder-tile" onclick="setArchiveFolder('drawings')"><span>📁 ПАПКА 1</span><b>📐 Креслення</b><span id="drawingCount">0 файлів</span></button><button class="folder-tile" onclick="setArchiveFolder('products')"><span>📁 ПАПКА 2</span><b>🏗️ Фото виробів</b><span id="productCount">0 файлів</span></button></div><label for="archiveFolder">Папка для збереження</label><select id="archiveFolder" onchange="renderArchive()"><option value="drawings">Креслення</option><option value="products">Фото виробів</option></select><label for="archiveTitle">Назва / маркування</label><input id="archiveTitle" maxlength="100" placeholder="Наприклад: ПК 60-12-8 або креслення КЖ-01"><label for="archiveNotes">Примітки (необов’язково)</label><input id="archiveNotes" maxlength="300" placeholder="Розміри, бетон, арматура, номер замовлення"><label for="archiveFile">Вибрати фото з телефону</label><input id="archiveFile" type="file" accept="image/*"><button class="btn" onclick="saveArchivePhoto()">Зберегти в обрану папку</button><div id="archiveStatus" class="result hidden" aria-live="polite"></div></div><div class="card"><h2 id="archiveHeading">📐 Креслення</h2><p class="muted">Перегляд збережених фото та видалення непотрібних файлів.</p><div id="archiveGallery" class="photo-grid"></div></div></section>
 <footer>BUTDETAL • автономний довідник • Дані довідкові</footer>
 </main>
+<script src="xlsx.full.min.js"></script>
 <script>
 function navTo(id){const btn=[...document.querySelectorAll('.tab')].find(x=>x.getAttribute('onclick')&&x.getAttribute('onclick').includes("'"+id+"'"));if(btn)showTab(id,btn);}
 function showTab(id,btn){document.querySelectorAll('.page').forEach(x=>x.classList.add('hidden'));document.getElementById(id).classList.remove('hidden');document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));btn.classList.add('active');window.scrollTo(0,0)}
@@ -166,5 +167,68 @@ async function deleteCloudProduct(id){const s=currentButdetalSession();if(!s)ret
 
 function signOutButdetal(){localStorage.removeItem('butdetal_session_v1');document.getElementById('appMain').classList.add('hidden');document.getElementById('authGate').classList.remove('hidden');const b=document.getElementById('signOutButton');if(b)b.remove()}
 (function initButdetalAuth(){const c=getSbConfig();if(c.url)document.getElementById('sbUrl').value=c.url;if(c.key)document.getElementById('sbKey').value=c.key;try{const u=JSON.parse(localStorage.getItem('butdetal_remember_user_v1')||'null');if(u){document.getElementById('authEmail').value=u.email||'';document.getElementById('authDisplayName').value=u.displayName||'';document.getElementById('rememberUser').checked=true}}catch(e){}})();
+
+/* Excel import/export: SheetJS is bundled locally, so workbook handling works offline. */
+let butdetalExcelPending=null;
+const EXCEL_SHEETS={
+'Каталог':['Назва','Маркування','Тип','Розміри (мм)','Об’єм (м³)','Марка бетону','Армування','Примітки'],
+'Нормативи':['Назва','Позначення','Значення','Одиниця','Джерело','Примітки'],
+'Формули':['Назва','Формула','Опис','Одиниці','Примітки'],
+'Таблиці':['Назва','Параметр','Значення','Одиниця','Примітки']
+};
+function excelStored(key){try{return JSON.parse(localStorage.getItem(key)||'[]')}catch(e){return []}}
+function excelSheetRows(name){
+ if(name==='Каталог')return productRecords().map(x=>({'Назва':x.name||'','Маркування':x.mark||'','Тип':x.type||'','Розміри (мм)':x.dimensions||'','Об’єм (м³)':x.volume||'','Марка бетону':x.concreteGrade||'','Армування':x.rebar||'','Примітки':x.notes||''}));
+ const keys={'Нормативи':'butdetal_norms_v1','Формули':'butdetal_formulas_v1','Таблиці':'butdetal_tables_v1'};
+ return excelStored(keys[name]).map(x=>({...x}));
+}
+function excelWorkbook(){
+ const wb=XLSX.utils.book_new();
+ Object.keys(EXCEL_SHEETS).forEach(n=>{let rows=excelSheetRows(n);let ws=XLSX.utils.json_to_sheet(rows,{header:EXCEL_SHEETS[n]});XLSX.utils.book_append_sheet(wb,ws,n)});
+ return wb;
+}
+function exportButdetalExcel(){try{XLSX.writeFile(excelWorkbook(),'BUTDETAL_довідник.xlsx')}catch(e){alert('Не вдалося створити Excel: '+e.message)}}
+function downloadExcelTemplate(){const wb=XLSX.utils.book_new();Object.keys(EXCEL_SHEETS).forEach(n=>XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([EXCEL_SHEETS[n]]),n));XLSX.writeFile(wb,'BUTDETAL_шаблон.xlsx')}
+function excelRows(wb,name){const ws=wb.Sheets[name];if(!ws)return [];return XLSX.utils.sheet_to_json(ws,{defval:'',raw:false}).filter(r=>Object.values(r).some(v=>String(v).trim()!==''))}
+function excelKey(name,x){
+ const norm=v=>String(v||'').trim().toLocaleLowerCase('uk-UA').replace(/\s+/g,' ');
+ if(name==='Каталог')return norm(x['Маркування'])||[norm(x['Назва']),norm(x['Тип']),norm(x['Розміри (мм)'])].join('|');
+ return name==='Нормативи'?[norm(x['Позначення']),norm(x['Назва'])].join('|'):name==='Формули'?norm(x['Назва']):[norm(x['Назва']),norm(x['Параметр'])].join('|');
+}
+async function previewButdetalExcel(){
+ const f=document.getElementById('excelFile').files[0],out=document.getElementById('excelPreview'),actions=document.getElementById('excelActions');
+ if(!f){out.textContent='Спочатку вибери файл .xlsx.';return}
+ try{
+  const wb=XLSX.read(await f.arrayBuffer(),{type:'array'}),incoming={};
+  Object.keys(EXCEL_SHEETS).forEach(n=>incoming[n]=excelRows(wb,n));
+  if(!Object.values(incoming).some(a=>a.length))throw Error('У книзі немає рядків із даними на очікуваних аркушах.');
+  const existing={'Каталог':productRecords(),'Нормативи':excelStored('butdetal_norms_v1'),'Формули':excelStored('butdetal_formulas_v1'),'Таблиці':excelStored('butdetal_tables_v1')};
+  const counts={};
+  Object.keys(incoming).forEach(n=>{const set=new Set(existing[n].map(x=>n==='Каталог'?excelKey(n,{'Назва':x.name,'Маркування':x.mark,'Тип':x.type,'Розміри (мм)':x.dimensions}):excelKey(n,x)));let dup=0;incoming[n].forEach(x=>{if(set.has(excelKey(n,x)))dup++});counts[n]={rows:incoming[n].length,duplicates:dup,newRows:incoming[n].length-dup}});
+  butdetalExcelPending=incoming;
+  out.innerHTML='<b>Попередній перегляд:</b><br>'+Object.entries(counts).map(([n,v])=>n+': '+v.rows+' рядків, дублікатів '+v.duplicates+', нових '+v.newRows).join('<br>')+'<p>Обери, чи оновлювати записи, які вже є в каталозі.</p>';
+  actions.classList.remove('hidden');
+ }catch(e){butdetalExcelPending=null;actions.classList.add('hidden');out.textContent='Помилка читання Excel: '+e.message}
+}
+function applyButdetalExcel(updateDuplicates){
+ if(!butdetalExcelPending)return;
+ const incoming=butdetalExcelPending,localProducts=productRecords();
+ const stored={'Нормативи':excelStored('butdetal_norms_v1'),'Формули':excelStored('butdetal_formulas_v1'),'Таблиці':excelStored('butdetal_tables_v1')};
+ let added=0,updated=0,skipped=0;
+ for(const row of incoming['Каталог']){
+  const item={name:String(row['Назва']||'').trim(),mark:String(row['Маркування']||'').trim(),type:String(row['Тип']||'').trim(),dimensions:String(row['Розміри (мм)']||'').trim(),volume:String(row['Об’єм (м³)']||'').trim(),concreteGrade:String(row['Марка бетону']||'').trim(),rebar:String(row['Армування']||'').trim(),notes:String(row['Примітки']||'').trim(),updated:new Date().toISOString()};
+  if(!item.name&&!item.mark)continue;
+  const k=excelKey('Каталог',row),i=localProducts.findIndex(x=>excelKey('Каталог',{'Назва':x.name,'Маркування':x.mark,'Тип':x.type,'Розміри (мм)':x.dimensions})===k);
+  if(i>=0){if(updateDuplicates){localProducts[i]={...localProducts[i],...item};updated++}else skipped++}
+  else{localProducts.push({id:'prod_excel_'+Date.now()+'_'+added,...item,created:new Date().toISOString()});added++}
+ }
+ saveProductRecords(localProducts);
+ const keys={'Нормативи':'butdetal_norms_v1','Формули':'butdetal_formulas_v1','Таблиці':'butdetal_tables_v1'};
+ for(const n of Object.keys(keys)){
+  for(const row of incoming[n]){const k=excelKey(n,row),i=stored[n].findIndex(x=>excelKey(n,x)===k);if(i>=0){if(updateDuplicates){stored[n][i]=row;updated++}else skipped++}else{stored[n].push(row);added++}}
+  localStorage.setItem(keys[n],JSON.stringify(stored[n]));
+ }
+ butdetalExcelPending=null;document.getElementById('excelActions').classList.add('hidden');document.getElementById('excelPreview').textContent='Імпорт завершено. Додано: '+added+', оновлено: '+updated+', пропущено дублікатів: '+skipped+'. Дані збережено на цьому пристрої.';document.getElementById('excelFile').value='';renderProductCatalog();syncButdetalRecords().catch(e=>console.warn('Excel sync:',e));
+}
 </script>
 </body></html>
