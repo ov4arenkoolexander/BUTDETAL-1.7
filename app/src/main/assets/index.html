@@ -15,7 +15,7 @@ main{padding:16px;max-width:760px;margin:auto}.search{width:100%;padding:15px 16
 .tabs{display:flex;gap:8px;overflow:auto;margin:0 -2px 16px;padding:3px 2px 9px;scrollbar-width:thin}.tab{border:1px solid #354255;border-radius:13px;padding:11px 14px;background:#1b2634;color:#c5ced9;white-space:nowrap;font-weight:700}.tab.active{background:linear-gradient(135deg,var(--gold),#e99d00);border-color:var(--gold);color:#161b21;box-shadow:0 5px 18px #ffc40035}
 .card{background:linear-gradient(145deg,#1a2533,#131c28);border:1px solid #354255;border-radius:19px;padding:17px;margin:12px 0;box-shadow:0 8px 24px #0003}
 h2{font-size:19px;margin:0 0 12px;color:#fff}h3{font-size:16px;margin:15px 0 7px;color:#f2f4f7}p{line-height:1.5}.muted{color:var(--muted);font-size:13px}
-label{display:block;font-size:13px;color:#c4ceda;margin:12px 0 6px}.remember-label{display:flex;align-items:center;gap:9px;margin:12px 0;color:#dce4ed}.remember-label input{width:19px;height:19px;accent-color:#ffc400;flex:0 0 auto}input,select{width:100%;padding:13px;border:1px solid #3b485b;border-radius:11px;font-size:16px;background:#101925;color:#f3f5f8;outline:none}input::placeholder{color:#788596}input[type=file]{font-size:13px;padding:10px}
+label{display:block;font-size:13px;color:#c4ceda;margin:12px 0 6px}.remember-label{display:flex;align-items:center;gap:9px;margin:12px 0;color:#dce4ed}.remember-label input{width:19px;height:19px;accent-color:#ffc400;flex:0 0 auto}input,select{width:100%;padding:13px;border:1px solid #3b485b;border-radius:11px;font-size:16px;background:#101925;color:#f3f5f8;outline:none}input::placeholder{color:#788596}input[type=file]{font-size:13px;padding:10px}.excel-select{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}.excel-select label{display:flex;align-items:center;gap:8px;background:#202d3e;border:1px solid #405168;border-radius:9px;padding:10px;font-size:14px}.excel-select input{width:18px;height:18px;accent-color:#ffc400}
 .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.btn{border:1px solid #ffd34b;border-radius:12px;padding:13px 16px;background:linear-gradient(135deg,#ffcf16,#e9a400);color:#151a20;font-weight:800;font-size:15px;margin-top:12px;width:100%;box-shadow:0 4px 14px #e8a90025}.btn:active{transform:translateY(1px)}.btn.secondary{background:#263345;color:#e7edf4;border:1px solid #4b5a70;box-shadow:none}.btn.danger{background:#702c32;color:#fff;border:1px solid #b84b52;box-shadow:none}
 .result{background:#243b2f;border:1px solid #39764e;border-radius:12px;padding:14px;margin-top:12px;font-size:17px;font-weight:bold;color:#d9ffe4}.hidden{display:none}
 table{width:100%;border-collapse:collapse;font-size:14px;color:#e4e9ef}td,th{text-align:left;padding:10px 7px;border-bottom:1px solid var(--line)}th{background:#253244;color:#ffd34b}
@@ -59,7 +59,9 @@ footer{text-align:center;color:#8390a0;font-size:12px;padding:24px}
 </div>
 <section id="home" class="page">
 <div class="home-welcome"><div><span class="eyebrow">БУДІВЕЛЬНИЙ ДОВІДНИК</span><h2>Працюй точно.<br><em>Будуй впевнено.</em></h2><p>Каталог виробів, креслення та розрахунки — в одному місці.</p></div><div class="home-mark">B<span>+</span></div></div>
-<div class="home-shortcuts"><div class="card"><h2>📊 Excel — імпорт та експорт</h2><p class="muted">Працює офлайн. Книга Excel містить чотири аркуші: Каталог, Нормативи, Формули та Таблиці.</p><button class="btn secondary" onclick="exportButdetalExcel()">⬇ Експортувати всі дані в Excel</button><label>Імпорт книги Excel (.xlsx)</label><input id="excelFile" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"><button class="btn" onclick="previewButdetalExcel()">Перевірити файл та показати попередній перегляд</button><div id="excelPreview" class="muted" aria-live="polite"></div><div id="excelActions" class="hidden"><button class="btn" onclick="applyButdetalExcel(true)">Оновити дублікати та додати нові</button><button class="btn secondary" onclick="applyButdetalExcel(false)">Пропустити дублікати, додати лише нові</button></div><button class="btn secondary" onclick="downloadExcelTemplate()">Завантажити порожній шаблон Excel</button></div>
+<div class="home-shortcuts"><div class="card"><h2>📊 Excel — імпорт та експорт</h2><p class="muted">Працює офлайн. Книга Excel містить чотири аркуші: Каталог, Нормативи, Формули та Таблиці.</p><p class="muted">Обери, які розділи включити у файл для друку або передачі.</p>
+<div class="excel-select"><label><input type="checkbox" class="excel-sheet-choice" value="Каталог" checked> Каталог виробів</label><label><input type="checkbox" class="excel-sheet-choice" value="Нормативи" checked> Нормативи</label><label><input type="checkbox" class="excel-sheet-choice" value="Формули" checked> Формули</label><label><input type="checkbox" class="excel-sheet-choice" value="Таблиці" checked> Таблиці</label></div>
+<button class="btn secondary" onclick="exportSelectedExcel()">⬇ Експортувати вибране в Excel</button><div id="excelExportStatus" class="muted" aria-live="polite"></div><label>Імпорт книги Excel (.xlsx)</label><input id="excelFile" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"><button class="btn" onclick="previewButdetalExcel()">Перевірити файл та показати попередній перегляд</button><div id="excelPreview" class="muted" aria-live="polite"></div><div id="excelActions" class="hidden"><button class="btn" onclick="applyButdetalExcel(true)">Оновити дублікати та додати нові</button><button class="btn secondary" onclick="applyButdetalExcel(false)">Пропустити дублікати, додати лише нові</button></div><button class="btn secondary" onclick="downloadExcelTemplate()">Завантажити порожній шаблон Excel</button></div>
 <button class="shortcut" onclick="navTo('concrete')"><span class="shortcut-icon">▰</span><b>Бетон</b><small>Об’єм конструкцій</small></button>
 <button class="shortcut" onclick="navTo('steel')"><span class="shortcut-icon">⌁</span><b>Арматура</b><small>Маса та довжина</small></button>
 <button class="shortcut" onclick="navTo('tables')"><span class="shortcut-icon">▦</span><b>Таблиці</b><small>Довідкові дані</small></button>
@@ -234,8 +236,23 @@ function excelWorkbook(){
  Object.keys(EXCEL_SHEETS).forEach(n=>{let rows=excelSheetRows(n);let ws=XLSX.utils.json_to_sheet(rows,{header:EXCEL_SHEETS[n]});XLSX.utils.book_append_sheet(wb,ws,n)});
  return wb;
 }
-function exportButdetalExcel(){try{XLSX.writeFile(excelWorkbook(),'BUTDETAL_довідник.xlsx')}catch(e){alert('Не вдалося створити Excel: '+e.message)}}
-function downloadExcelTemplate(){const wb=XLSX.utils.book_new();Object.keys(EXCEL_SHEETS).forEach(n=>XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([EXCEL_SHEETS[n]]),n));XLSX.writeFile(wb,'BUTDETAL_шаблон.xlsx')}
+function exportWorkbookToPhone(wb,filename){
+ const status=document.getElementById('excelExportStatus');
+ try{const bytes=XLSX.write(wb,{bookType:'xlsx',type:'base64'});
+ if(window.AndroidStorage&&AndroidStorage.saveDocument){status.textContent='Вибери папку та підтверди збереження файлу…';const result=AndroidStorage.saveDocument(filename,'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',bytes);if(result!=='OK')status.textContent=result||'Не вдалося відкрити збереження.';return}
+ const blob=new Blob([Uint8Array.from(atob(bytes),c=>c.charCodeAt(0))],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),2000);status.textContent='Файл підготовлено для завантаження.';
+ }catch(e){status.textContent='Помилка експорту: '+e.message}
+}
+function exportSelectedExcel(){
+ const names=[...document.querySelectorAll('.excel-sheet-choice:checked')].map(x=>x.value),status=document.getElementById('excelExportStatus');
+ if(!names.length){status.textContent='Познач хоча б один розділ.';return}
+ const wb=XLSX.utils.book_new();names.forEach(n=>{const rows=excelSheetRows(n);const ws=XLSX.utils.json_to_sheet(rows,{header:EXCEL_SHEETS[n]});ws['!cols']=EXCEL_SHEETS[n].map(h=>({wch:Math.max(14,Math.min(34,h.length+8))}));XLSX.utils.book_append_sheet(wb,ws,n)});
+ exportWorkbookToPhone(wb,'BUTDETAL_вибране_для_друку.xlsx');
+}
+function downloadExcelTemplate(){
+ const wb=XLSX.utils.book_new();Object.keys(EXCEL_SHEETS).forEach(n=>{const ws=XLSX.utils.aoa_to_sheet([EXCEL_SHEETS[n]]);ws['!cols']=EXCEL_SHEETS[n].map(h=>({wch:Math.max(14,Math.min(34,h.length+8))}));XLSX.utils.book_append_sheet(wb,ws,n)});
+ exportWorkbookToPhone(wb,'BUTDETAL_шаблон.xlsx');
+}
 function excelRows(wb,name){const ws=wb.Sheets[name];if(!ws)return [];return XLSX.utils.sheet_to_json(ws,{defval:'',raw:false}).filter(r=>Object.values(r).some(v=>String(v).trim()!==''))}
 function excelKey(name,x){
  const norm=v=>String(v||'').trim().toLocaleLowerCase('uk-UA').replace(/\s+/g,' ');
