@@ -1,4 +1,52 @@
 plugins { id 'com.android.application' }
 
 dependencies { implementation 'com.rmtheis:tess-two:9.1.0' }
-android { namespace 'ua.budivelnyk.ua'; compileSdk 35; defaultConfig { applicationId 'ua.budivelnyk.ua.beta'; minSdk 23; targetSdk 35; versionCode 203; versionName '2.0.3' } }
+
+android {
+    namespace 'ua.budivelnyk.ua'
+    compileSdk 35
+    defaultConfig {
+        applicationId 'ua.budivelnyk.ua.beta'
+        minSdk 23
+        targetSdk 35
+        versionCode 203
+        versionName '2.0.3'
+    }
+}
+
+// Download official Tesseract language data at build time.
+// The resulting APK contains the models and performs OCR fully offline.
+def tessdataDir = file('src/main/assets/tessdata')
+def tessdataModels = [
+    'ukr.traineddata',
+    'rus.traineddata',
+    'eng.traineddata'
+]
+
+tasks.register('downloadTesseractModels') {
+    group = 'build setup'
+    description = 'Downloads Ukrainian, Russian and English Tesseract OCR models.'
+    outputs.files(tessdataModels.collect { new File(tessdataDir, it) })
+
+    doLast {
+        tessdataDir.mkdirs()
+        tessdataModels.each { model ->
+            def target = new File(tessdataDir, model)
+            if (!target.exists() || target.length() == 0) {
+                def source = new URL("https://raw.githubusercontent.com/tesseract-ocr/tessdata_fast/main/${model}")
+                logger.lifecycle("Downloading Tesseract model: ${model}")
+                source.withInputStream { input ->
+                    target.withOutputStream { output -> output << input }
+                }
+                if (target.length() < 100000) {
+                    target.delete()
+                    throw new GradleException("Downloaded OCR model is unexpectedly small: ${model}")
+                }
+            } else {
+                logger.lifecycle("Tesseract model already present: ${model}")
+            }
+        }
+    }
+}
+
+tasks.named('preBuild').configure { dependsOn 'downloadTesseractModels' }
