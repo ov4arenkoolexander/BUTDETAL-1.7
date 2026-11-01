@@ -1,2 +1,2 @@
 plugins { id 'com.android.application' }
-android { namespace 'ua.budivelnyk.ua'; compileSdk 35; defaultConfig { applicationId 'ua.budivelnyk.ua.beta'; minSdk 23; targetSdk 35; versionCode 202; versionName '2.0.2' } }
+android { namespace 'ua.budivelnyk.ua'; compileSdk 35; defaultConfig { applicationId 'ua.budivelnyk.ua.beta'; minSdk 23; targetSdk 35; versionCode 203; versionName '2.0.3' } }
